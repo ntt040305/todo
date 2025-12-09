@@ -16,9 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.views.generic import RedirectView
+from django.contrib.auth import views as auth_views
 from core.views import index
+
+
+class CustomLogoutView(auth_views.LogoutView):
+    http_method_names = ['get', 'post', 'options']
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', index, name='index'),
+    # Trang đầu tiên: dùng form login mặc định (giao diện admin) nhưng redirect về /todo/
+    path('', RedirectView.as_view(url='/login/', permanent=False)),
+    path('login/', auth_views.LoginView.as_view(template_name='admin/login.html'), name='login'),
+    path('logout/', CustomLogoutView.as_view(next_page='/login/'), name='logout'),
+    path('todo/', index, name='todo'),  # Trang todo - yêu cầu login
 ]

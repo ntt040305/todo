@@ -11,17 +11,72 @@
 
 <body>
     <div class="container">
-        <h1>To-Do List</h1>
-
-        <div class="input-box">
-            <input id="taskInput" type="text" placeholder="Nhập công việc..." />
-            <button id="addBtn">Thêm</button>
+        <div class="header-top">
+            <h1>To-Do List</h1>
+            <a href="{% url 'logout' %}" class="btn btn-logout">Đăng xuất</a>
         </div>
 
-        <ul id="taskList"></ul>
-    </div>
+        <div class="filter-box">
+            <select class="sort-dropdown" onchange="window.location.href='?sort=' + this.value">
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Mới nhất</option>
+                <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Cũ nhất</option>
+                <option value="a-z" {% if sort_by == 'a-z' %}selected{% endif %}>A - Z</option>
+                <option value="z-a" {% if sort_by == 'z-a' %}selected{% endif %}>Z - A</option>
+            </select>
+        </div>
 
-    <script src="{% static 'core/script.js' %}"></script>
+        <form class="input-box" method="POST">
+            {% csrf_token %}
+            {{ form.title }}
+            <input type="hidden" name="action" value="add" />
+            <button type="submit">Thêm</button>
+        </form>
+
+        <ul id="taskList">
+            {% for todo in todos %}
+            <li class="task-row {% if todo.is_done %}completed{% endif %}">
+                <div class="task-main">
+                    <div class="task-head">
+                        <div class="task-title">{{ todo.title }}</div>
+                        <div class="pill {% if todo.is_done %}pill-done{% else %}pill-open{% endif %}">
+                            {% if todo.is_done %}Đã hoàn thành{% else %}Đang mở{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="task-actions">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle" />
+                            <input type="hidden" name="todo_id" value="{{ todo.id }}" />
+                            <button type="submit" class="btn {% if todo.is_done %}btn-secondary{% else %}btn-success{% endif %}">
+                                {% if todo.is_done %}Hoàn tác{% else %}Hoàn thành{% endif %}
+                            </button>
+                        </form>
+
+                        {% if not todo.is_done %}
+                        <form method="POST" class="edit-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="edit" />
+                            <input type="hidden" name="todo_id" value="{{ todo.id }}" />
+                            <input type="text" name="title" value="{{ todo.title }}" required />
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="todo_id" value="{{ todo.id }}" />
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </li>
+            {% empty %}
+            <li>Chưa có công việc nào.</li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 
 </html>

@@ -18,18 +18,32 @@ from django.contrib import admin
 from django.urls import path
 from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
-from core.views import index
+from django.contrib.auth.views import LogoutView
+from core.views import index, welcome, register
 
 
-class CustomLogoutView(auth_views.LogoutView):
+class CustomLogoutView(LogoutView):
     http_method_names = ['get', 'post', 'options']
+    
+    def get(self, request, *args, **kwargs):
+        from django.contrib.auth import logout
+        logout(request)
+        from django.shortcuts import redirect
+        return redirect('/')
+    
+    def post(self, request, *args, **kwargs):
+        from django.contrib.auth import logout
+        logout(request)
+        from django.shortcuts import redirect
+        return redirect('/')
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Trang đầu tiên: dùng form login mặc định (giao diện admin) nhưng redirect về /todo/
-    path('', RedirectView.as_view(url='/login/', permanent=False)),
+    # Trang đầu tiên: trang chào mừng
+    path('', welcome, name='welcome'),
     path('login/', auth_views.LoginView.as_view(template_name='admin/login.html'), name='login'),
-    path('logout/', CustomLogoutView.as_view(next_page='/login/'), name='logout'),
+    path('register/', register, name='register'),
+    path('logout/', CustomLogoutView.as_view(), name='logout'),
     path('todo/', index, name='todo'),  # Trang todo - yêu cầu login
 ]
